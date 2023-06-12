@@ -24,11 +24,11 @@ class ProductManager {
 
     constructor(path) {
         this.path = path
-        this.products = this.initProducts()
+        this.products = this.#initProducts()
         this.id = 1
     }
 
-    initProducts() {
+    #initProducts() {
         try {
             if (fs.existsSync(this.path)) {
                 const fileProducts = fs.readFileSync(this.path, 'utf-8')
@@ -41,7 +41,7 @@ class ProductManager {
         }
     }
 
-    saveProduct() {
+    #saveProduct() {
         try {
             fs.writeFileSync(this.path, JSON.stringify(this.products))
         } catch (error) {
@@ -71,7 +71,7 @@ class ProductManager {
         }
         this.id++
         this.products.push(product)
-        this.saveProduct()
+        this.#saveProduct()
     }
 
     getProducts() {
