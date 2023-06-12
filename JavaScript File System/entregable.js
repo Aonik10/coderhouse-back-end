@@ -1,34 +1,22 @@
-/* 
-Consigna: Realizar una clase de nombre "ProductManager", el cual permitirá trabajar con multiples productos. Éste debe poder agregar, consultar,
-modificar y eliminar un producto y manejarlo en persistencia de archivos (basado en entregable 1)
-
-Aspectos a incluir: 
-
-- La clase debe contar con una variable this.path, el cual se inicializará desde el constructor y debe recibir la ruta a trabajar
-desde el momento de generar su instancia. 
-
-- Debe guardar objetos con el siguiente formato:
-    - id (se debe incrementar automáticamente, no enviarse desde el cuerpo)
-    - title (nombre del producto)
-    - desdcription (descripción del producto)
-    - price (precio)
-    - thumbnail (ruta de imagen)
-    - code (código identificador)
-    - stock (número de piezas disponibles)
-
-*/
-
 const fs = require("fs")
 
 class ProductManager {
 
     constructor(path) {
         this.path = path
-        this.products = this.#initProducts()
-        this.id = 1
+        this.products = this.#readProducts()
+        this.id = this.#initId()
     }
 
-    #initProducts() {
+    #initId() {
+        if (this.products.length == 0) return 1
+        let highestIdProduct = this.products.reduce((prev, current) => {
+            return (prev.id > current.id) ? prev : current;
+        })
+        return highestIdProduct.id + 1
+    }
+
+    #readProducts() {
         try {
             if (fs.existsSync(this.path)) {
                 const fileProducts = fs.readFileSync(this.path, 'utf-8')
@@ -41,7 +29,7 @@ class ProductManager {
         }
     }
 
-    #saveProduct() {
+    #saveProducts() {
         try {
             fs.writeFileSync(this.path, JSON.stringify(this.products))
         } catch (error) {
@@ -71,17 +59,31 @@ class ProductManager {
         }
         this.id++
         this.products.push(product)
-        this.#saveProduct()
+        this.#saveProducts()
     }
 
     getProducts() {
-        return this.products
+        return this.#readProducts()
     }
 
     getProductById(id) {
         const productFound = this.products.find(product => product.id === id)
-        if (!productFound) console.log("Not found")
-        return productFound
+        if (!productFound) throw new Error("Product not found")
+        return productFound 
+    }
+
+    updateProduct(id, propertiesToUpdate) {
+        let productIndex = this.products.findIndex(product => product.id === id)
+        if (productIndex == -1) throw new Error("Product not found")
+        this.products[productIndex] = {...this.products[productIndex], ...propertiesToUpdate}
+        this.#saveProducts()
+    }
+
+    deleteProduct(id) {
+        let productIndex = this.products.findIndex(product => product.id === id)
+        if (productIndex < 0) throw new Error("Product not found")
+        this.products.splice(productIndex, 1)
+        this.#saveProducts()
     }
 }
 
@@ -91,6 +93,8 @@ const productManager = new ProductManager("./JavaScript File System/products.jso
 productManager.addProduct("product 1", "description of the product 1", 12, "https://productProvider.com/1", "code1", 43)
 productManager.addProduct("product 2", "description of the product 2", 15, "https://productProvider.com/2", "code2", 27)
 productManager.addProduct("product 3", "description of the product 3", 7, "https://productProvider.com/3", "code3", 105)
+
+productManager.updateProduct(5, {thumbnail: "hola2"})
 
 console.log(productManager.getProducts())
 
